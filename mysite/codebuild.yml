@@ -1,0 +1,36 @@
+version: 0.2
+
+
+phases:
+  pre_build:
+    commands:
+      # `ok` try 6 script for running post build only when build succeeded
+      - echo '#!/bin/bash' > /usr/local/bin/ok; echo 'if [[ "$CODEBUILD_BUILD_SUCCEEDING" == "0" ]]; then exit 1; else exit 0; fi' >> /usr/local/bin/ok; chmod +x /usr/local/bin/ok
+      - aws --version
+      - $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:=latest}
+  build:
+    commands:
+      - ok && echo Build started on `date`
+      - echo "development build"
+      - ls -al
+      #- docker build -t $REPOSITORY_URI:$IMAGE_TAG -t $REPOSITORY_URI:latest -f Dockerfile .
+  post_build:
+    commands:
+      - ok && echo Build completed on `date`
+      - apt update && apt install zip jq -y
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      #- TASK_FAMILY="taskdef-erp-api-dev"
+      #- IMAGE_PLACEHOLDER="<IMAGE_NAME>"
+      #- sed -i 's@'"$IMAGE_PLACEHOLDER"'@'"$REPOSITORY_URI"':latest@g' taskdef.json
+      #- CONTAINER_DEFINITION_FILE=$(cat taskdef.json)
+      #- export TASK_DEF="file://$(pwd)/taskdef.json"
+      #- export TASK_VERSION=$(aws ecs register-task-definition --cli-input-json $TASK_DEF | jq --raw-output '.taskDefinition.revision')
+      #- echo "Registered ECS Task Definition:" $TASK_VERSION
+      - echo Build completed on `date`
+
+artifacts:
+  files:
+    - "**/*.py"
