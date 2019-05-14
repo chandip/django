@@ -25,6 +25,10 @@ COPY . /django/
 
 RUN pip install -r /django/requirements.txt
 
+RUN python manage.py makemigrations
+
+RUN python manage.py migrate
+
 CMD ["python", "manage.py", "migrate"]
 
 EXPOSE 80

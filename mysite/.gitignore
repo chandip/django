@@ -1,5 +1,6 @@
 idea/
 db.sqlite3
+testers/migrations
 venv/
 .DS_Store
 mysite/__pycache__/
